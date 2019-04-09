@@ -1,8 +1,7 @@
+# Sudoku Solver
+Part of Udacity's Artificial Intelligence Nanodegree, the following code can be used to solve sudokus using multiple methods of elimination in combination. In this project, I extended the Sudoku-solving agent developed in the classroom lectures to solve _diagonal_ Sudoku puzzles and implement a new constraint strategy called "naked twins". 
 
-## Introduction
-Planning is an important topic in AI because intelligent agents are expected to automatically plan their own actions in uncertain domains. Planning and scheduling systems are commonly used in automation and logistics operations, robotics and self-driving cars, and for aerospace applications like the Hubble telescope and NASA Mars rovers.
-
-This project is split between implementation and analysis. In this assignment, I combined symbolic logic and classical planning to implement an agent that performs progression search to solve planning problems. 
+A diagonal Sudoku puzzle is identical to traditional Sudoku puzzles with the added constraint that the boxes on the two main diagonals of the board must also contain the digits 1-9 in each cell (just like the rows, columns, and 3x3 blocks). The naked twins strategy says that if you have two or more unallocated boxes in a unit and there are only two digits that can go in those two boxes, then those two digits can be eliminated from the possible assignments of all other boxes in the same unit.
 
 
 ## Solution
