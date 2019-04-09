@@ -1,66 +1,191 @@
-# Solve Sudoku with AI
 
-## Synopsis
+## Introduction
+Planning is an important topic in AI because intelligent agents are expected to automatically plan their own actions in uncertain domains. Planning and scheduling systems are commonly used in automation and logistics operations, robotics and self-driving cars, and for aerospace applications like the Hubble telescope and NASA Mars rovers.
 
-In this project, you will extend the Sudoku-solving agent developed in the classroom lectures to solve _diagonal_ Sudoku puzzles and implement a new constraint strategy called "naked twins". A diagonal Sudoku puzzle is identical to traditional Sudoku puzzles with the added constraint that the boxes on the two main diagonals of the board must also contain the digits 1-9 in each cell (just like the rows, columns, and 3x3 blocks). The naked twins strategy says that if you have two or more unallocated boxes in a unit and there are only two digits that can go in those two boxes, then those two digits can be eliminated from the possible assignments of all other boxes in the same unit.
-
-
-## Quickstart Guide
-
-**YOU ONLY NEED TO WRITE CODE IN `solution.py`.**
-
-1. Follow the instructions in the classroom lesson to install and configure the `aind` [Anaconda](https://www.continuum.io/downloads) environment which includes several important packages that are used for the project. OS X or Unix/Linux users can activate the aind environment by running the following (Windows users simply run `activate aind`):
-    
-    `$ source activate aind`
-
-2. You can run a small set of test cases using the local test suite. 
-
-    `(aind)$ python -m unittest -v`
-
-3. Copy your code from the classroom for the search and basic strategies, then add the diagonal units at the top of the solutions.py file and complete the `naked_twins()` function.  Pseudocode for the `naked_twins()` function is available [here](https://github.com/udacity/artificial-intelligence/blob/master/Projects/1_Sudoku/pseudocode.md).
-
-4. Run the test suite again to check your progress. Once you pass all the test cases in the local test suite, you can submit the project to run more comprehensive tests with the remote test suite:
-
-    `(aind)$ udacity submit`
-
-5. You can run the code with visualization (see the last section of the readme for more information)
-
-    `(aind)$ python solution.py`
+This project is split between implementation and analysis. In this assignment, I combined symbolic logic and classical planning to implement an agent that performs progression search to solve planning problems. 
 
 
-### Notes
+## Solution
 
-- You will not receive credit for the project until you submit the zip file created by `udacity submit` in your classroom.
+### Naked Twins
 
-- You must submit _exactly_ the zip file created by the CLI in step 3 to the classroom; if you make any changes to the file, you'll receive an error message when you attempt to submit in the classroom.
+Eliminate values using the naked twins strategy.
+  The naked twins strategy says that if you have two or more unallocated boxes
+  in a unit and there are only two digits that can go in those two boxes, then
+  those two digits can be eliminated from the possible assignments of all other
+  boxes in the same unit.
+  
+  Parameters:
+  values(dict)
+    a dictionary of the form {'box_name': '123456789', ...}
+  
+  Returns:
+  dict
+    The values dictionary with the naked twins eliminated from peers
+
+```python
+def naked_twins(values):
+
+  twins = []
+
+  for unit in unitlist:
+
+    new_twins = []
+
+    for box1 in unit:
+      for box2 in unit: 
+        if box1 is not box2 and values[box1] == values[box2] and len(values[box1]) == 2:
+          new_twins.append([box1, box2])
 
 
-## Instructions
+    if new_twins:
+      twins.append(new_twins)
+    else:
+      twins.append(False)
 
-You must complete the required functions in the 'solution.py' file (copy in code from the classroom where indicated, and add or extend with new code as described below). The `test_solution.py` file includes a few unit tests for local testing, but the primary mechanism for testing your code is the Udacity Project Assistant command line utility described in the next section.
+  for unit, pair in zip(unitlist, twins):
+    if pair:
+      twinA = pair[0][0]
+      twinB = pair[1][0]
+      valueA = values[twinA][0]
+      valueB = values[twinA][1]
 
-YOU SHOULD EXPECT TO MODIFY OR WRITE YOUR OWN UNIT TESTS AS PART OF COMPLETING THIS PROJECT. There is no requirement to write test cases, but the Project Assistant test suite is not shared with students so writing your own tests may be necessary to find and resolve any errors that arise there.
+      for box in unit:
+        if box is not twinA and box is not twinB:
+          values = assign_value(values, box, values[box].replace(valueA, ''))
+          values = assign_value(values, box, values[box].replace(valueB, ''))
+  return values
+```
 
-1. Add the two new diagonal units to the `unitlist` at the top of solution.py. Re-run the local tests with `python -m unittest` to confirm your solution. 
+### Elimination Strategy
 
-1. Copy your code from the classroom for the `eliminate()`, `only_choice()`, `reduce_puzzle()`, and `search()` into the corresponding functions in the `solution.py` file.
+  Apply the eliminate strategy to a Sudoku puzzle
+  The eliminate strategy says that if a box has a value assigned, then none
+  of the peers of that box can have the same value.
+  
+  Parameters:
+  values(dict)
+    a dictionary of the form {'box_name': '123456789', ...}
+  Returns
 
-1. Implement the `naked_twins()` function (see the pseudocode [here](https://github.com/udacity/artificial-intelligence/blob/master/Projects/1_Sudoku/pseudocode.md) for help), and update `reduce_puzzle()` to call it (along with the other existing strategies). Re-run the local tests with `python -m unittest -v` to confirm your solution.
+  dict:
+    The values dictionary with the assigned values eliminated from peers
 
-1. Run the remote tests with `udacity submit` to confirm your solution. If any of the remote test cases fail, use the feedback to write your own local test cases for debugging.
+```python
+def eliminate(values):
 
+  solved = [box for box in boxes if len(values[box]) == 1]
+  empties = [box for box in boxes if len(values[box]) == 0]
 
-## Submission
+  for empty in empties:
+    values[empty] = '123456789'
 
-To submit your code, run `udacity submit` from a terminal in the top-level directory of this project. You will be prompted for a username and password the first time the script is run. If you login using google or facebook, visit [this link](https://project-assistant.udacity.com/auth_tokens/jwt_login) for alternate login instructions.
+  for box in solved:
 
-The Udacity-PA CLI tool is automatically installed with the AIND conda environment provided in the classroom, but you can also install it manually by running `pip install udacity-pa`. You can submit your code for scoring by running `udacity submit`. The project assistant server has a collection of unit tests that it will execute on your code, and it will provide feedback on any successes or failures. You must pass all test cases in the project assistant to pass the project.
+    for peer in peers[box]:
+      values = assign_value(values, peer, values[peer].replace(values[box], ''))
 
-Once your project passes all test cases on the Project Assistant, submit the zip file created by the `udacity submit` command in the classroom to automatically receive credit for the project. NOTE: You will not receive personalized feedback for this project on submissions that pass all test cases, however, all other projects in the term do provide personalized feedback on both passing & failing submissions.
+  return values
+```
 
+### Only Choice
+Apply the only choice strategy to a Sudoku puzzle
+The only choice strategy says that if only one box in a unit allows a certain
+digit, then that box must be assigned that digit.
+	
+Parameters:
+	values(dict)
+	a dictionary of the form {'box_name': '123456789', ...}
 
-## Visualization
+Returns:
+dict
+The values dictionary with all single-valued boxes assigned
+Notes
 
-**Note:** The `pygame` library is required to visualize your solution -- however, the `pygame` module can be troublesome to install and configure. It should be installed by default with the AIND conda environment, but it is not reliable across all operating systems or versions. Please refer to the pygame documentation [here](http://www.pygame.org/download.shtml), or discuss among your peers in the slack group if you need help.
+```python
+def only_choice(values):
+  for unit in unitlist:
+  for digit in '123456789':
 
-Running `python solution.py` will automatically attempt to visualize your solution, but you mustuse the provided `assign_value` function (defined in `utils.py`) to track the puzzle solution progress for reconstruction during visuzalization.
+  matches = []
+
+  for box in unit:
+  if digit in values[box]:
+  matches.append(box)
+
+  if len(matches) == 1:
+  values = assign_value(values, matches[0], digit)
+
+  return values
+```
+### Reduce Puzzle
+Reduce a Sudoku puzzle by repeatedly applying all constraint strategies
+	
+Parameters:
+	values(dict)
+		a dictionary of the form {'box_name': '123456789', ...}
+	
+Returns:
+	dict or False
+		
+   The values dictionary after continued application of the constraint strategies
+		no longer produces any changes, or False if the puzzle is unsolvable 
+        
+```python
+def reduce_puzzle(values):
+	
+	stalled = False
+
+	while not stalled:
+
+		start_values = dict(values)
+
+		reduced_values = eliminate(values)
+		reduced_values = only_choice(reduced_values)
+		
+		stalled = start_values == reduced_values
+
+		empties = [box for box in boxes if len(values[box]) == 0]
+
+		if empties:
+			return False
+	
+	return values
+```
+
+### Search
+
+Apply depth first search to solve Sudoku puzzles in order to solve puzzles
+	that cannot be solved by repeated reduction alone.
+				
+Parameters:
+	values(dict)
+		a dictionary of the form {'box_name': '123456789', ...}
+
+Returns: dict or False
+
+The values dictionary with all boxes assigned or False
+	
+```python
+def search(values):
+
+	if values is False:
+		return values
+
+	values = reduce_puzzle(values)
+
+	unsolved = [box for box in boxes if len(values[box]) > 1]
+
+	if len(unsolved) == 0:
+		return values
+	
+	start_box = unsolved[0]
+
+	for digit in values[start_box]:
+		new_values = values.copy()
+		new_values[start_box] = digit
+		attempt = search(new_values)
+		
+		if attempt:
+			return attempt
+```
